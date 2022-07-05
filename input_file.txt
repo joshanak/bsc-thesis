@@ -1,0 +1,2 @@
+To add a train type ADD train color rail number start stop end stop
+To set new path for train type MOVE train color start stop end stop

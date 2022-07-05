@@ -1,0 +1,251 @@
+import math
+
+import pygame
+
+
+class Train:
+    def __init__(self, name,  Rail, start_stop, end_stop):
+        self.Rail = Rail
+        self.x = start_stop.Rect[0]
+        self.y = start_stop.Rect[1]
+        self.name = name
+        self.color = self.assignColor()
+        self.vel = None
+        self.current_stop, self.next_stop = None, None
+        self.current_railElement = None
+        self.path = None
+        self.end_stop = end_stop
+        self.start_stop = start_stop
+        self.angle = 0
+        self.end_angle = None
+
+
+    def draw(self, screen):
+        self.train = pygame.draw.circle(screen, self.color, [int(self.x), int(self.y)], 10)
+
+    # takes the start stop and end stop
+    # check if train is already at the end stop -> return current coordinates
+    # calculates the rail elements between the stops
+    # moves the train rail element by rail element
+    # if the train is located on the last rail element or the sum path was one rail element
+    # check if current iteration hits the target_coords if so do appropriately
+    def update(self):
+        if self.start_stop == None or self.end_stop == None:
+            return
+        self.calculateCurrentStation()
+        #if current coordinates are equals to end stop coordinates do not update(train is at destination)
+        if self.inVicinity((self.x, self.y), (self.end_stop.Rect[0], self.end_stop.Rect[1])):
+            return
+        #if train is not at the destination but the path is none -> calculate the path
+        if self.path == None:
+            self.path = dict()
+            self.path = self.calculatePath(self.start_stop, self.end_stop)
+            self.current_railElement = self.path.pop(next(iter(self.path)))
+            if self.current_railElement['type'] == 'arc':
+                if len(self.path) == 0:
+                    self.angle, self.end_angle = self.start_stop.angle, self.end_stop.angle
+                else:
+                    self.angle = self.start_stop.angle
+                    self.end_angle = self.current_railElement['start_angle']
+
+
+        type = self.current_railElement['type']
+
+        # if the path is only one railway element the end stop is on the same element
+        # send current location and end stop location
+        if len(self.path) == 0:
+            self.moveAlgorithm(type, [self.end_stop.Rect[0],self.end_stop.Rect[1]])
+            if self.current_railElement == None:
+                path, self.angle = None, 0
+                self.x, self.y = round(self.end_stop.Rect[0]), round(self.end_stop.Rect[1])
+                return
+
+
+        #if the path contains more than one railway element update the current position
+        #if the current position is equal to the end point of the current rail element
+        #pop of the next railway element of the path and assign as new current
+        if len(self.path) >= 1:
+            self.moveAlgorithm(type, self.current_railElement['end'])
+            if self.current_railElement == None:
+                self.current_railElement = self.path.pop(next(iter(self.path)))
+                self.x, self.y = self.current_railElement['start'][0], self.current_railElement['start'][1]
+                if self.current_railElement['type'] == 'arc':
+                    if len(self.path) == 0:
+                        self.angle, self.end_angle = self.current_railElement['end_angle'], self.end_stop.angle
+                    else:
+                        self.angle, self.end_angle = self.current_railElement['end_angle'], self.current_railElement['start_angle']
+
+                else:
+                    self.angle, self.end_angle = 0, 1
+
+
+
+
+    # takes the type of rail element and destination coordinates
+    # checks if the target is left, right, up or down and calls the intended method
+    # move_arc and move_line moves the train for one place and assigns them to the trains coordinates
+    def moveAlgorithm(self, type,  target_coords):
+        direction = None
+        # if the train coordinates are at the target or the arc is completed
+        if self.inVicinity((self.x, self.y), (target_coords[0], target_coords[1])):
+            self.current_railElement = None
+            return
+        if self.angle != None and self.end_angle!=None:
+            if (round(self.angle)%360) == (round(self.end_angle)%360):
+                self.current_railElement = None
+                return
+        if type == 'line':
+            if round(self.x) > round(target_coords[0]) and (self.y-5<=target_coords[1]<=self.y+6):
+                direction = 'L'
+            elif round(self.x) < round(target_coords[0]) and (self.y-5<=target_coords[1]<=self.y+6):
+                direction ='R'
+            elif (self.x-5<=target_coords[0]<=self.x+6) and round(self.y) > round(target_coords[1]):
+                direction = 'U'
+            elif (self.x-5<=target_coords[0]<=self.x+6) and round(self.y) < round(target_coords[1]):
+                direction = 'D'
+        if type == 'arc':
+                self.angle += self.vel
+                self.move_arc(self.current_railElement['radius'],'CounterClock')
+        if type == 'line':
+                self.move_line(direction)
+
+
+    # calculates railway elements that the train needs to pass
+    # returns a dict key is name of element value is element qualities
+    def calculatePath(self, start_stop, end_stop):
+        start_element = start_stop.part_of
+        end_element = end_stop.part_of
+        path = dict()
+        found = None
+        circular = 1
+        for key, element in self.Rail.ordered_elements.items():
+            if key == start_element:
+                found = 1
+            if found != None:
+                path[key] = element
+            if (key == end_element) and (found != None):
+                #incase if end stop is on the same element but the train needs to do a full circle
+                if (start_element==end_element) and self.Rail.stops.index(end_stop)<self.Rail.stops.index(start_stop):
+                    continue
+                circular = 0 #incase if it isnt a circular path
+                break
+        if circular == 1:
+            # add all elements in yaml so a circular path can be constructed (could be linear -> optimization)
+            for key, element in self.Rail.ordered_elements.items():
+                path[key] = element
+                if key == end_element:
+                    if start_element == end_element:
+                        aux = path[start_element]
+                        if 'arc' in start_element:
+                            new_key = 'arcx'
+                        if 'line' in start_element:
+                            new_key = 'linex'
+                        path[new_key] = aux
+                    break
+        return path
+
+    def move_line(self, direction):
+        if direction == 'R':
+            self.x, self.y = self.x+self.vel, self.y
+        if direction == 'L':
+            self.x, self.y = self.x-self.vel, self.y
+        if direction == 'U':
+            self.x, self.y = self.x, self.y-self.vel
+        if direction == 'D':
+            self.x, self.y = self.x, self.y+self.vel
+
+
+    def move_arc(self,  radius, direction):
+        theta = math.radians(self.angle)
+        if direction == 'Clock': #lijevo na desno
+            self.x, self.y = self.current_railElement['x'] + radius * math.cos(theta), self.current_railElement['y'] + radius * math.sin(theta)
+            return
+        if direction == 'CounterClock': #desna na lijevo
+            self.x, self.y = self.current_railElement['x'] - radius * math.cos(theta), self.current_railElement['y'] + radius * math.sin(theta)
+            return
+
+    def calculateCurrentStation(self):
+        for i in range(len(self.Rail.stops)):
+            stop = self.Rail.stops[i]
+            if self.inVicinity((self.x, self.y), (stop.Rect[0], stop.Rect[1])):
+                if self.current_stop != stop:
+                    self.current_stop = stop
+                    if i == (len(self.Rail.stops)-1):
+                        self.next_stop = self.Rail.stops[0]
+                    else:
+                        self.next_stop = self.Rail.stops[i+1]
+                    self.calculateVelocity()
+                self.current_stop = stop
+
+
+
+    def inVicinity(self, coord_a, coord_b):
+        if (coord_a[0]-5<=coord_b[0]<=coord_a[0]+5) and (coord_a[1]-5<=coord_b[1]<=coord_a[1]+5):
+            return True
+        return False
+
+    def assignColor(self):
+        colors = dict()
+        colors["BLACK"] = (0,0,0)
+        colors["WHITE"] = (255, 255, 255)
+        colors["RED"] = (255, 0, 0)
+        colors["BLUE"] = (0, 0, 255)
+        colors["YELLOW"] = (255, 255, 0)
+        colors["GREEN"] = (0, 0, 255)
+        colors["GRAY"] = (127, 127, 127)
+        return colors[self.name]
+
+
+    def calculateVelocity(self):
+        duration = self.current_stop.duration
+        dist = self.calculateDistance()
+        time = duration*25
+        self.vel = dist/time
+
+
+
+    def calculateDistance(self):
+        distance = 0
+        path_between_stops = self.calculatePath(self.current_stop, self.next_stop)
+        elements = list(path_between_stops.values())
+
+        if len(elements) == 1:
+            if elements[0]['type'] == 'arc':
+                distance = self.calculateLengthOfArc(self.current_stop.angle, self.next_stop.angle, elements[0]['radius'])
+
+            if elements[0]['type'] == 'line':
+                distance = self.calculateLengthOfLine([self.current_stop.Rect[0], self.current_stop.Rect[1]], [self.next_stop.Rect[0], self.next_stop.Rect[1]])
+        else:
+            for i in range(len(elements)-1):
+                if i==0:
+                    if elements[i]['type'] == 'arc':
+                        added_distance= self.calculateLengthOfArc(self.current_stop.angle, elements[i]['start_angle'], elements[i]['radius'])
+                    if elements[i]['type'] == 'line':
+                        added_distance= self.calculateLengthOfLine([self.current_stop.Rect[0], self.current_stop.Rect[1]], [elements[i]['end'][0], elements[i]['end'][1]])
+                    distance += added_distance
+
+                elif i==(len(elements)-1):
+                    if elements[i]['type'] == 'arc':
+                         added_distance = self.calculateLengthOfArc(elements[i]['end_angle'], self.next_stop.angle, elements[i]['radius'])
+                    if elements[i]['type'] == 'line':
+                        added_distance = self.calculateLengthOfLine([self.next_stop.Rect[0], self.next_stop.Rect[1]], elements[i]['end'])
+                    distance += added_distance
+
+                else:
+                    if elements[i]['type'] == 'arc':
+                        added_distance = self.calculateLengthOfArc(elements[i]['end_angle'], elements[i]['start_angle'], elements[i]['radius'])
+                    if elements[i]['type'] == 'line':
+                        added_distance= self.calculateLengthOfLine(elements[i]['start'],elements[i]['end'])
+                    distance += added_distance
+
+        
+        return distance
+
+    def calculateLengthOfArc(self, degree1, degree2, radius):
+        degree1 = degree1%360
+        self.width =  (abs(degree1-degree2))
+        return (abs(degree1-degree2))*(3.14/180)*radius
+
+    def calculateLengthOfLine(self, coord_a, coord_b):
+        return math.dist(coord_a, coord_b)
+
