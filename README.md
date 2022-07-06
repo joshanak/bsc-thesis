@@ -1,2 +1,5 @@
 # zavrsni_rad
-Zavrsni rad FER 2021/2023
+Simulator planiranja voznog reda u željezničkom sustavu.
+
+Završni rad FER 2022/2023
+
