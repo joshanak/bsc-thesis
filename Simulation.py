@@ -93,7 +93,7 @@ def draw(screen):
 # function for reading yaml file
 def read_yaml1():
     list_of_rails = list()
-    with open(r"new_route.yaml") as stream:
+    with open(r"routes/route_1.yaml") as stream:
         data_loaded = yaml.safe_load(stream)
         for rail in data_loaded['data']:
             rail_elements = RailwayElements()
