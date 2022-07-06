@@ -1,0 +1,163 @@
+data:
+  T1:
+    elements:
+      arc1:
+        color: (0,0,0)
+        x: 100
+        y: 150
+        radius: 50
+        start_angle: 90
+        end_angle: 270
+        start: [100, 100]
+        end: [100, 200]
+        type: 'arc'
+      line2:
+        color: (0,0,0)
+        start: [ 100, 200 ]
+        end: [ 250, 200 ]
+        type: 'line'
+      arc2:
+        color: (0,0,0)
+        x: 250
+        y: 150
+        radius: 50
+        start_angle: 270
+        end_angle: 90
+        start: [250, 200]
+        end: [250, 100]
+        type: 'arc'
+      line1:
+        color: (0,0,0)
+        start: [250, 100]
+        end: [100, 100]
+        type: 'line'
+    stops:
+      s1:
+        location: [100, 97]
+        width: 20
+        height: 10
+        part_of: 'arc1'
+        duration: 1
+        angle: 270
+      s2:
+        location: [46, 145]
+        width: 10
+        height: 20
+        part_of: 'arc1'
+        duration: 1
+        angle: 360
+      s3:
+        location: [100, 197]
+        width: 20
+        height: 10
+        part_of: 'line2'
+        duration: 1
+        angle: 90
+      s4:
+        location: [175, 197]
+        width: 20
+        height: 10
+        part_of: 'line2'
+        duration: 4
+        angle: 90
+      s5:
+        location: [250, 197]
+        width: 20
+        height: 10
+        part_of: 'arc2'
+        duration: 4
+        angle: 90
+      s6:
+        location: [ 250, 97 ]
+        width: 20
+        height: 10
+        part_of: 'arc2'
+        duration: 4
+        angle: 270
+    start: s1
+    color: [70,50,30]
+  T2:
+    elements:
+      arc1:
+        color: (0,0,0)
+        x: 100
+        y: 150
+        radius: 47
+        start_angle: 90
+        end_angle: 270
+        start: [100, 100]
+        end: [100, 200]
+        type: 'arc'
+      arc3:
+        color: (0,0,0)
+        x: 100
+        y: 150
+        radius: 47
+        start_angle: 270
+        end_angle: 90
+        start: [100, 200]
+        end: [100, 100]
+        type: 'arc'
+    stops:
+      s1:
+        location: [100, 97]
+        width: 20
+        height: 10
+        part_of: 'arc1'
+        duration: 9
+        angle: 270
+      s2:
+        location: [50, 145]
+        width: 10
+        height: 10
+        part_of: 'arc1'
+        duration: 15
+        angle: 360
+      s3:
+        location: [100, 196]
+        width: 20
+        height: 10
+        part_of: 'arc3'
+        duration: 5
+        angle: 90
+    start: s1
+    color: [0,0,255]
+  T3:
+    elements:
+      arc3:
+        color: (0,0,0)
+        x: 250
+        y: 150
+        radius: 47
+        start_angle: 270
+        end_angle: 90
+        start: [ 250, 200 ]
+        end: [ 250, 100 ]
+        type: 'arc'
+      arc4:
+        color: (0,0,0)
+        x: 250
+        y: 150
+        radius: 47
+        start_angle: 90
+        end_angle: 270
+        start: [ 250, 10 ]
+        end: [ 250, 20 ]
+        type: 'arc'
+    stops:
+      s6:
+        location: [250, 197]
+        width: 20
+        height: 10
+        part_of: 'arc3'
+        duration: 8
+        angle: 90
+      s5:
+        location: [250, 97]
+        width: 20
+        height: 10
+        part_of: 'arc4'
+        duration: 5
+        angle: 270
+    start: s1
+    color: [ 0,0,255 ]
