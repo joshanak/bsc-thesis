@@ -7,7 +7,7 @@ import os
 from Railway.RailwayElements import RailwayElements
 from Railway.Rail import Rail
 from Railway.TrainStop import TrainStop
-from Train import Train
+from Train.Train import Train
 
 trains = list()
 rails = list()
@@ -54,6 +54,14 @@ def parseInput(input):
 
             else:
                 print("Error no such train")
+        if commands[0] == 'STOP':
+            train = checkIfExists(train_name)
+            if train !=None:
+                print("STOPPED", train_name)
+                train.start_stop = train.current_stop
+                train.x, train.y = train.current_stop.Rect[0], train.current_stop.Rect[1]
+                train.next_stop = None
+                train.end_stop = None
 
 def checkIfExists(target_train_name):
     for train in trains:
@@ -75,7 +83,9 @@ def checkCollisions():
                 occurences[aSegment] = 1
              else:
                 print("ERROR", aSegment, ' is already busy')
-                train.current_stop = train.start_stop
+                #train.current_stop = train.start_stop
+                train.start_stop = train.current_stop
+                train.x, train.y = train.current_stop.Rect[0], train.current_stop.Rect[1]
                 train.next_stop = None
                 train.end_stop = None
                 return True
@@ -93,7 +103,7 @@ def draw(screen):
 # function for reading yaml file
 def read_yaml1():
     list_of_rails = list()
-    with open(r"routes/route_1.yaml") as stream:
+    with open(r"routes/route_2.yaml") as stream:
         data_loaded = yaml.safe_load(stream)
         for rail in data_loaded['data']:
             rail_elements = RailwayElements()
