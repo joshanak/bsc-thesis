@@ -18,6 +18,9 @@ class Train:
         self.start_stop = start_stop
         self.angle = 0
         self.end_angle = None
+        self.circular = 0
+        if start_stop == end_stop:
+            self.circular = 1
 
 
     def draw(self, screen):
@@ -35,7 +38,10 @@ class Train:
         self.calculateCurrentStation()
         #if current coordinates are equals to end stop coordinates do not update(train is at destination)
         if self.inVicinity((self.x, self.y), (self.end_stop.Rect[0], self.end_stop.Rect[1])):
-            return
+            if self.circular == 0:
+                return
+
+
         #if train is not at the destination but the path is none -> calculate the path
         if self.path == None:
             self.path = dict()
@@ -48,15 +54,15 @@ class Train:
                     self.angle = self.start_stop.angle
                     self.end_angle = self.current_railElement['start_angle']
 
-
-        type = self.current_railElement['type']
+        if self.current_railElement!=None:
+            type = self.current_railElement['type']
 
         # if the path is only one railway element the end stop is on the same element
         # send current location and end stop location
         if len(self.path) == 0:
             self.moveAlgorithm(type, [self.end_stop.Rect[0],self.end_stop.Rect[1]])
             if self.current_railElement == None:
-                path, self.angle = None, 0
+                self.path, self.angle = None, 0
                 self.x, self.y = round(self.end_stop.Rect[0]), round(self.end_stop.Rect[1])
                 return
 
@@ -118,6 +124,8 @@ class Train:
         path = dict()
         found = None
         circular = 1
+        #if start_stop == end_stop:
+        #    return self.Rail.ordered_elements
         for key, element in self.Rail.ordered_elements.items():
             if key == start_element:
                 found = 1
@@ -125,7 +133,7 @@ class Train:
                 path[key] = element
             if (key == end_element) and (found != None):
                 #incase if end stop is on the same element but the train needs to do a full circle
-                if (start_element==end_element) and self.Rail.stops.index(end_stop)<self.Rail.stops.index(start_stop):
+                if (start_element==end_element) and self.Rail.stops.index(end_stop)<=self.Rail.stops.index(start_stop):
                     continue
                 circular = 0 #incase if it isnt a circular path
                 break
@@ -142,6 +150,7 @@ class Train:
                             new_key = 'linex'
                         path[new_key] = aux
                     break
+        #print(start_stop.name, end_stop.name, path.keys())
         return path
 
     def move_line(self, direction):
@@ -237,8 +246,6 @@ class Train:
                     if elements[i]['type'] == 'line':
                         added_distance= self.calculateLengthOfLine(elements[i]['start'],elements[i]['end'])
                     distance += added_distance
-
-        
         return distance
 
     def calculateLengthOfArc(self, degree1, degree2, radius):
