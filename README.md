@@ -2,5 +2,5 @@
 Simulator of train schedule planning in Python
 
 
-Završni rad FER 2022/2023
+Završni rad FER 2022/2022
 
